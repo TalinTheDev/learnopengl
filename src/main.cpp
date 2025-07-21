@@ -105,16 +105,22 @@ unsigned int setupEBO() {
   return EBO;
 }
 
-void draw(Shader shader, unsigned int VAO, unsigned int texture) {
-  glBindTexture(GL_TEXTURE_2D, texture);
+void draw(Shader shader, unsigned int VAO, unsigned int texture1,
+          unsigned int texture2) {
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, texture1);
+  glActiveTexture(GL_TEXTURE1);
+  glBindTexture(GL_TEXTURE_2D, texture2);
   shader.use();
   glBindVertexArray(VAO);
   glDrawElements(GL_TRIANGLES, sizeof(indices), GL_UNSIGNED_INT, 0);
 }
 
-unsigned int setupTexture() {
+unsigned int setupTexture(const char *path, GLenum type) {
+  stbi_set_flip_vertically_on_load(true);
   unsigned int texture;
   glGenTextures(1, &texture);
+  glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, texture);
 
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -124,10 +130,9 @@ unsigned int setupTexture() {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
   int width, height, nrChannels;
-  unsigned char *data =
-      stbi_load("../assets/container.jpg", &width, &height, &nrChannels, 0);
+  unsigned char *data = stbi_load(path, &width, &height, &nrChannels, 0);
   if (data) {
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, type,
                  GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
   } else {
@@ -149,10 +154,16 @@ int main() {
   unsigned int VAO = setupVAO();
   unsigned int VBO = setupVBO();
   unsigned int EBO = setupEBO();
-  unsigned int texture = setupTexture();
+  unsigned int texture1 = setupTexture("../assets/container.jpg", GL_RGB);
+  unsigned int texture2 = setupTexture("../assets/awesomeface.png", GL_RGBA);
 
   // For a wireframe drawing, set the mode to GL_LINE rather than GL_FILL
   // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+  // Tell OpenGL which texture unit each shader sample belongs to
+  ourShader.use();
+  ourShader.setInt("texture1", 0);
+  ourShader.setInt("texture2", 1);
 
   while (!glfwWindowShouldClose(window)) {
     processInput(window);
@@ -160,7 +171,7 @@ int main() {
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    draw(ourShader, VAO, texture);
+    draw(ourShader, VAO, texture1, texture2);
 
     glfwPollEvents();
     glfwSwapBuffers(window);
