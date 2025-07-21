@@ -1,5 +1,4 @@
 // clang-format off
-#include <cmath>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 // clang-format on
@@ -12,22 +11,18 @@ const int HEIGHT = 600;
 
 // Vertices for the triangle defined as the 3 corners and its colors
 const float vertices[] = {
-    // positions          // colors
+    // positions        // colors
     0.5f,  -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, // bottom right
     -0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, // bottom left
     0.0f,  0.5f,  0.0f, 0.0f, 0.0f, 1.0f, // top
 };
 
-// Callback function to resize the OpenGL viewport when the GLFW window's
-// dimensions are changed
-// Used with: glfwSetFramebufferSizeCallback
+const unsigned int indices[] = {0, 1, 2};
+
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
   glViewport(0, 0, width, height);
 }
 
-// Function to process GLFW inputs
-// Currently just checks for an ESCAPE key press and if detected, sets the
-// window state to should close
 void processInput(GLFWwindow *window) {
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
     glfwSetWindowShouldClose(window, true);
@@ -82,10 +77,20 @@ unsigned int setupVBO() {
   return VBO;
 }
 
+unsigned int setupEBO() {
+  unsigned int EBO;
+  glGenBuffers(1, &EBO);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
+               GL_STATIC_DRAW);
+
+  return EBO;
+}
+
 void draw(Shader shader, unsigned int VAO) {
   shader.use();
   glBindVertexArray(VAO);
-  glDrawArrays(GL_TRIANGLES, 0, 3);
+  glDrawElements(GL_TRIANGLES, sizeof(indices), GL_UNSIGNED_INT, 0);
 }
 
 int main() {
@@ -98,6 +103,7 @@ int main() {
 
   unsigned int VAO = setupVAO();
   unsigned int VBO = setupVBO();
+  unsigned int EBO = setupEBO();
 
   // For a wireframe drawing, set the mode to GL_LINE rather than GL_FILL
   // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -114,7 +120,6 @@ int main() {
     glfwSwapBuffers(window);
   }
 
-  // De-allocate resources
   glDeleteVertexArrays(1, &VAO);
   glDeleteBuffers(1, &VBO);
   glfwTerminate();
