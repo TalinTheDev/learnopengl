@@ -1,6 +1,8 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
+#include "glm/ext/quaternion_geometric.hpp"
+#include "glm/geometric.hpp"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
@@ -29,6 +31,22 @@ public:
 
   void move(Direction direction, float deltaTime) {
     float velocity = moveSpeed * deltaTime;
+
+    switch (direction) {
+    case Forward:
+      position += velocity * frontFace;
+      break;
+    case Backward:
+      position -= velocity * frontFace;
+      break;
+
+    case Left:
+      position -= velocity * glm::normalize(glm::cross(frontFace, upVec));
+      break;
+    case Right:
+      position += velocity * glm::normalize(glm::cross(frontFace, upVec));
+      break;
+    }
   }
 
   void look(double xpos, double ypos) {

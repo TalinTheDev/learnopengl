@@ -74,24 +74,18 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
   glViewport(0, 0, width, height);
 }
 
-void processInput(GLFWwindow *window, int key, int scancode, int action,
-                  int mods) {
-
-  if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
-    glfwSetWindowShouldClose(window, true);
-  }
-  if (key == GLFW_KEY_D && action == GLFW_PRESS && debugWindowShowTime > 0.1f &&
-      mods == GLFW_MOD_CONTROL) {
-    debugWindow = !debugWindow;
-    debugWindowShowTime = 0.0f;
-  } else {
-    debugWindowShowTime += 0.01;
-  }
-}
 void handleMovement(GLFWwindow *window) {
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
     glfwSetWindowShouldClose(window, true);
   }
+  if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS &&
+      debugWindowShowTime > 0.1f) {
+    debugWindow = !debugWindow;
+    debugWindowShowTime = 0.0f;
+  } else {
+    debugWindowShowTime += 0.01f;
+  }
+
   if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
     camera.move(Direction::Forward, deltaTime);
   }
@@ -139,7 +133,6 @@ GLFWwindow *initalizeWindowContext() {
   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
   glfwSetCursorPosCallback(window, mouse_callback);
   glfwSetScrollCallback(window, scroll_callback);
-  // glfwSetKeyCallback(window, processInput);
 
   if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
     std::cout << "Failed to initialize GLAD";
@@ -307,7 +300,7 @@ int main() {
                           5.0f);
       ImGui::SliderFloat("Camera Yaw", &camera.yaw, -360.0f, 360.0f);
       ImGui::SliderFloat("Camera Pitch", &camera.pitch, -89.0f, 89.0f);
-      ImGui::SliderFloat("Camera FOV", &camera.fov, 0.0f, 120.0f);
+      ImGui::SliderFloat("Camera FOV", &camera.fov, 1.0f, 120.0f);
       ImGui::SliderFloat("Movement Speed", &camera.moveSpeed, 0.0f, 10.0f);
       ImGui::SliderFloat("Look Speed", &camera.lookSens, 0.0f, 10.0f);
 
