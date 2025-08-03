@@ -1,6 +1,7 @@
 #ifndef SHADER_H
 #define SHADER_H
 
+#include "glm/gtc/type_ptr.hpp"
 #include <glad/glad.h> // used to get all required OpenGL headers
 
 #include <fstream>
@@ -107,6 +108,11 @@ public:
   }
   void setFloat(const std::string &name, float value) const {
     glUniform1f(glGetUniformLocation(ID, name.c_str()), value);
+  }
+
+  void setMat4(const std::string &name, glm::mat4 mat) const {
+    glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE,
+                       glm::value_ptr(mat));
   }
 };
 

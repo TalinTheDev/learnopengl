@@ -17,8 +17,8 @@
 #include <iostream>
 
 // Global Constants
-const int WIDTH = 800;
-const int HEIGHT = 600;
+const float WIDTH = 800.0f;
+const float HEIGHT = 600.0f;
 bool debugWindow = false;
 float debugWindowShowTime = 0.0f;
 
@@ -64,7 +64,7 @@ void processInput(GLFWwindow *window) {
     glfwSetWindowShouldClose(window, true);
   }
   if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS &&
-      debugWindowShowTime > 0.05f) {
+      debugWindowShowTime > 0.1f) {
     debugWindow = !debugWindow;
     debugWindowShowTime = 0.0f;
   } else {
@@ -149,17 +149,10 @@ void draw(Shader shader, unsigned int VAO, unsigned int texture1,
   glBindTexture(GL_TEXTURE_2D, texture2);
 
   glm::mat4 view = glm::mat4(1.0f);
-  view = glm::translate(view, glm::vec3(-cameraX, -cameraY, cameraZ));
+  view = glm::translate(view, glm::vec3(cameraX, cameraY, cameraZ));
   glm::mat4 projection;
   projection =
-      glm::perspective(glm::radians(cameraFOV), 800.0f / 600.0f, 0.1f, 100.0f);
-
-  shader.use();
-
-  unsigned int viewLoc = glGetUniformLocation(shader.ID, "view");
-  glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-  unsigned int projectionLoc = glGetUniformLocation(shader.ID, "projection");
-  glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+      glm::perspective(glm::radians(cameraFOV), WIDTH / HEIGHT, 0.1f, 100.0f);
 
   glBindVertexArray(VAO);
   for (unsigned int i = 0; i < 10; i++) {
@@ -169,8 +162,11 @@ void draw(Shader shader, unsigned int VAO, unsigned int texture1,
     float angle = 20.0f * i;
     model =
         glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-    unsigned int modelLoc = glGetUniformLocation(shader.ID, "model");
-    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+
+    shader.use();
+    shader.setMat4("view", view);
+    shader.setMat4("projection", projection);
+    shader.setMat4("model", model);
     glDrawArrays(GL_TRIANGLES, 0, 36);
   }
 }
