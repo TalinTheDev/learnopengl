@@ -2,6 +2,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 // clang-format on
+#include "camera.hpp"
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/ext/matrix_transform.hpp"
 #include "glm/geometric.hpp"
@@ -23,21 +24,10 @@ const float HEIGHT = 600.0f;
 bool debugWindow = false;
 float debugWindowShowTime = 0.0f;
 
-float cameraFOV = 45.0f;
-float cameraBaseSpeed = 2.5f;
-
-glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
-glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
-float lastX = 400, lastY = 300;
-float mouseSensitivity = 0.1f;
-bool firstMouse = true;
-float cameraYaw = 0.0f;
-float cameraPitch = 0.0f;
+Camera camera;
 
 // Vertices for the cubes defined as the corners and their texture
 // coordinates
@@ -84,80 +74,50 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
   glViewport(0, 0, width, height);
 }
 
-void processInput(GLFWwindow *window) {
-  float currentFrame = glfwGetTime();
-  deltaTime = currentFrame - lastFrame;
-  lastFrame = currentFrame;
+void processInput(GLFWwindow *window, int key, int scancode, int action,
+                  int mods) {
 
-  float cameraSpeed = cameraBaseSpeed * deltaTime;
-
-  if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+  if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
     glfwSetWindowShouldClose(window, true);
   }
-  if (glfwGetKey(window, GLFW_KEY_BACKSLASH) == GLFW_PRESS &&
-      debugWindowShowTime > 0.1f) {
+  if (key == GLFW_KEY_D && action == GLFW_PRESS && debugWindowShowTime > 0.1f &&
+      mods == GLFW_MOD_CONTROL) {
     debugWindow = !debugWindow;
     debugWindowShowTime = 0.0f;
   } else {
     debugWindowShowTime += 0.01;
   }
-
+}
+void handleMovement(GLFWwindow *window) {
+  if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+    glfwSetWindowShouldClose(window, true);
+  }
   if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-    cameraPos += cameraSpeed * cameraFront;
+    camera.move(Direction::Forward, deltaTime);
   }
   if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-    cameraPos -= cameraSpeed * cameraFront;
+    camera.move(Direction::Backward, deltaTime);
   }
   if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-    cameraPos -=
-        glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+    camera.move(Direction::Left, deltaTime);
   }
   if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-    cameraPos +=
-        glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+    camera.move(Direction::Right, deltaTime);
   }
   if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-    cameraPos.y += cameraSpeed;
+    camera.move(Direction::Up, deltaTime);
   }
   if (glfwGetKey(window, GLFW_KEY_BACKSPACE) == GLFW_PRESS) {
-    cameraPos.y -= cameraSpeed;
+    camera.move(Direction::Down, deltaTime);
   }
 }
 
 void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
-  if (firstMouse) {
-    lastX = xpos;
-    lastY = ypos;
-    firstMouse = false;
-  }
-  float xoffset = xpos - lastX;
-  float yoffset = lastY - ypos;
-  lastX = xpos;
-  lastY = ypos;
-
-  xoffset *= mouseSensitivity;
-  yoffset *= mouseSensitivity;
-
-  cameraYaw += xoffset;
-  cameraPitch += yoffset;
-  if (cameraPitch > 89.0f)
-    cameraPitch = 89.0f;
-  if (cameraPitch < -89.0f)
-    cameraPitch = -89.0f;
-
-  glm::vec3 direction;
-  direction.x = cos(glm::radians(cameraYaw)) * cos(glm::radians(cameraPitch));
-  direction.y = sin(glm::radians(cameraPitch));
-  direction.z = sin(glm::radians(cameraYaw)) * cos(glm::radians(cameraPitch));
-  cameraFront = glm::normalize(direction);
+  camera.look(xpos, ypos);
 }
 
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
-  cameraFOV -= (float)yoffset;
-  if (cameraFOV < 1.0f)
-    cameraFOV = 1.0f;
-  if (cameraFOV > 120.0f)
-    cameraFOV = 120.0f;
+  camera.zoom(yoffset);
 }
 
 GLFWwindow *initalizeWindowContext() {
@@ -179,6 +139,7 @@ GLFWwindow *initalizeWindowContext() {
   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
   glfwSetCursorPosCallback(window, mouse_callback);
   glfwSetScrollCallback(window, scroll_callback);
+  // glfwSetKeyCallback(window, processInput);
 
   if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
     std::cout << "Failed to initialize GLAD";
@@ -230,10 +191,11 @@ void draw(Shader shader, unsigned int VAO, unsigned int texture1,
   glBindTexture(GL_TEXTURE_2D, texture2);
 
   glm::mat4 view;
-  view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+  view = glm::lookAt(camera.position, camera.position + camera.frontFace,
+                     camera.upVec);
   glm::mat4 projection;
   projection =
-      glm::perspective(glm::radians(cameraFOV), WIDTH / HEIGHT, 0.1f, 100.0f);
+      glm::perspective(glm::radians(camera.fov), WIDTH / HEIGHT, 0.1f, 100.0f);
 
   glBindVertexArray(VAO);
   for (unsigned int i = 0; i < 10; i++) {
@@ -315,8 +277,12 @@ int main() {
 
   glEnable(GL_DEPTH_TEST);
   while (!glfwWindowShouldClose(window)) {
+    float currentFrame = glfwGetTime();
+    deltaTime = currentFrame - lastFrame;
+    lastFrame = currentFrame;
+
     glfwPollEvents();
-    processInput(window);
+    handleMovement(window);
 
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
@@ -329,20 +295,21 @@ int main() {
     if (debugWindow) {
       ImGui::Begin("LearnOpenGL");
       if (ImGui::Button("Reset")) {
-        cameraFOV = 45.0f;
-        cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
-        cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-        cameraYaw = 0.0f;
-        cameraPitch = 0.0f;
-        cameraBaseSpeed = 2.5f;
-        mouseSensitivity = 0.01f;
+        camera.fov = 45.0f;
+        camera.position = glm::vec3(0.0f, 0.0f, 3.0f);
+        camera.frontFace = glm::vec3(0.0f, 0.0f, -1.0f);
+        camera.yaw = 0.0f;
+        camera.pitch = 0.0f;
+        camera.moveSpeed = 2.5f;
+        camera.lookSens = 0.01f;
       }
-      ImGui::SliderFloat3("Camera Position", (float *)&cameraPos, -5.0f, 5.0f);
-      ImGui::SliderFloat("Camera Yaw", &cameraYaw, -360.0f, 360.0f);
-      ImGui::SliderFloat("Camera Pitch", &cameraPitch, -89.0f, 89.0f);
-      ImGui::SliderFloat("Camera FOV", &cameraFOV, 0.0f, 120.0f);
-      ImGui::SliderFloat("Movement Speed", &cameraBaseSpeed, 0.0f, 10.0f);
-      ImGui::SliderFloat("Look Speed", &mouseSensitivity, 0.0f, 10.0f);
+      ImGui::SliderFloat3("Camera Position", (float *)&camera.position, -5.0f,
+                          5.0f);
+      ImGui::SliderFloat("Camera Yaw", &camera.yaw, -360.0f, 360.0f);
+      ImGui::SliderFloat("Camera Pitch", &camera.pitch, -89.0f, 89.0f);
+      ImGui::SliderFloat("Camera FOV", &camera.fov, 0.0f, 120.0f);
+      ImGui::SliderFloat("Movement Speed", &camera.moveSpeed, 0.0f, 10.0f);
+      ImGui::SliderFloat("Look Speed", &camera.lookSens, 0.0f, 10.0f);
 
       ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
                   1000.0f / io.Framerate, io.Framerate);
