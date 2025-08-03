@@ -19,6 +19,8 @@
 // Global Constants
 const int WIDTH = 800;
 const int HEIGHT = 600;
+bool debugWindow = false;
+float debugWindowShowTime = 0.0f;
 
 // Vertices for the rectangle defined as the corners, their colors, and their
 // texture coordinates
@@ -60,6 +62,13 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
 void processInput(GLFWwindow *window) {
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
     glfwSetWindowShouldClose(window, true);
+  }
+  if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS &&
+      debugWindowShowTime > 0.05f) {
+    debugWindow = !debugWindow;
+    debugWindowShowTime = 0.0f;
+  } else {
+    debugWindowShowTime += 0.01;
   }
 }
 
@@ -128,7 +137,10 @@ glm::vec3 cubePositions[] = {
     glm::vec3(1.3f, -2.0f, -2.5f),  glm::vec3(1.5f, 2.0f, -2.5f),
     glm::vec3(1.5f, 0.2f, -1.5f),   glm::vec3(-1.3f, 1.0f, -1.5f),
 };
-
+float cameraX = 0.0f;
+float cameraY = 0.0f;
+float cameraZ = -3.0f;
+float cameraFOV = 45.0f;
 void draw(Shader shader, unsigned int VAO, unsigned int texture1,
           unsigned int texture2) {
   glActiveTexture(GL_TEXTURE0);
@@ -137,10 +149,10 @@ void draw(Shader shader, unsigned int VAO, unsigned int texture1,
   glBindTexture(GL_TEXTURE_2D, texture2);
 
   glm::mat4 view = glm::mat4(1.0f);
-  view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+  view = glm::translate(view, glm::vec3(-cameraX, -cameraY, cameraZ));
   glm::mat4 projection;
   projection =
-      glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+      glm::perspective(glm::radians(cameraFOV), 800.0f / 600.0f, 0.1f, 100.0f);
 
   shader.use();
 
@@ -237,6 +249,23 @@ int main() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     draw(ourShader, VAO, texture1, texture2);
 
+    if (debugWindow) {
+      ImGui::Begin("LearnOpenGL");
+      if (ImGui::Button("Reset")) {
+        cameraX = 0.0f;
+        cameraY = 0.0f;
+        cameraZ = -3.0f;
+        cameraFOV = 45.0f;
+      }
+      ImGui::SliderFloat("Camera X", &cameraX, -10.0f, 10.0f);
+      ImGui::SliderFloat("Camera Y", &cameraY, -10.0f, 10.0f);
+      ImGui::SliderFloat("Camera Z", &cameraZ, -10.0f, 10.0f);
+      ImGui::SliderFloat("Camera FOV", &cameraFOV, 30.0f, 120.0f);
+
+      ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
+                  1000.0f / io.Framerate, io.Framerate);
+      ImGui::End();
+    }
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
