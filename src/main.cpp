@@ -135,8 +135,8 @@ int main() {
     return -1;
   }
 
-  Shader cubeShader("../src/shader.vert", "../src/shader.frag");
-  Shader lightShader("../src/shader.vert", "../src/light.frag");
+  Shader cubeShader("../src/cube.vert", "../src/cube.frag");
+  Shader lightShader("../src/light.vert", "../src/light.frag");
 
   unsigned int cubeVAO;
   unsigned int lightVAO;
@@ -150,13 +150,16 @@ int main() {
 
   glBindVertexArray(cubeVAO);
 
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
   glEnableVertexAttribArray(0);
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),
+                        (void *)(3 * sizeof(float)));
+  glEnableVertexAttribArray(1);
 
   glGenVertexArrays(1, &lightVAO);
   glBindVertexArray(lightVAO);
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
   glEnableVertexAttribArray(0);
 
   // Setup Dear ImGui context
@@ -176,6 +179,9 @@ int main() {
   // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
   glEnable(GL_DEPTH_TEST);
+  glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
+  glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
+  glm::vec3 objectColor(1.0f, 0.5f, 0.31f);
   while (!glfwWindowShouldClose(window)) {
     float currentFrame = glfwGetTime();
     deltaTime = currentFrame - lastFrame;
@@ -201,8 +207,12 @@ int main() {
     glBindVertexArray(cubeVAO);
     glm::mat4 model = glm::mat4(1.0f);
     cubeShader.use();
-    cubeShader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
-    cubeShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+    cubeShader.setVec3("objectColor", objectColor.x, objectColor.y,
+                       objectColor.z);
+    cubeShader.setVec3("lightColor", lightColor.x, lightColor.y, lightColor.z);
+    cubeShader.setVec3("lightPos", lightPos.x, lightPos.y, lightPos.z);
+    cubeShader.setVec3("viewPos", camera.position.x, camera.position.y,
+                       camera.position.z);
     cubeShader.setMat4("view", view);
     cubeShader.setMat4("projection", projection);
     cubeShader.setMat4("model", model);
@@ -211,32 +221,32 @@ int main() {
 
     glBindVertexArray(lightVAO);
     lightShader.use();
-    glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
     model = glm::mat4(1.0f);
     model = glm::translate(model, lightPos);
     model = glm::scale(model, glm::vec3(0.2f));
 
-    lightShader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
-    lightShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+    lightShader.setVec3("objectColor", objectColor.x, objectColor.y,
+                        objectColor.z);
+    lightShader.setVec3("lightColor", lightColor.x, lightColor.y, lightColor.z);
     lightShader.setMat4("view", view);
     lightShader.setMat4("projection", projection);
     lightShader.setMat4("model", model);
     glDrawArrays(GL_TRIANGLES, 0, sizeof(vertices));
 
     if (debugWindow) {
-      glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_CAPTURED);
+      glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
       ImGui::SetNextWindowSize(ImVec2(WIDTH / 2, HEIGHT / 2));
       ImGui::Begin("LearnOpenGL Debug Window");
-      if (ImGui::Button("Reset")) {
-        camera.fov = 45.0f;
-        camera.position = glm::vec3(0.0f, 0.0f, 3.0f);
-        camera.frontFace = glm::vec3(0.0f, 0.0f, -1.0f);
-        camera.yaw = 0.0f;
-        camera.pitch = 0.0f;
-        camera.moveSpeed = 2.5f;
-        camera.lookSens = 0.01f;
-      }
       if (ImGui::CollapsingHeader("Camera")) {
+        if (ImGui::Button("Reset")) {
+          camera.fov = 45.0f;
+          camera.position = glm::vec3(0.0f, 0.0f, 3.0f);
+          camera.frontFace = glm::vec3(0.0f, 0.0f, -1.0f);
+          camera.yaw = 0.0f;
+          camera.pitch = 0.0f;
+          camera.moveSpeed = 2.5f;
+          camera.lookSens = 0.01f;
+        }
         ImGui::SliderFloat3("Camera Position", (float *)&camera.position, -5.0f,
                             5.0f);
         ImGui::SliderFloat("Camera Yaw", &camera.yaw, -360.0f, 360.0f);
@@ -244,6 +254,16 @@ int main() {
         ImGui::SliderFloat("Camera FOV", &camera.fov, 1.0f, 120.0f);
         ImGui::SliderFloat("Movement Speed", &camera.moveSpeed, 0.0f, 10.0f);
         ImGui::SliderFloat("Look Speed", &camera.lookSens, 0.0f, 10.0f);
+      }
+      if (ImGui::CollapsingHeader("Lighting")) {
+        if (ImGui::Button("Reset")) {
+          lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
+          objectColor = glm::vec3(1.0f, 0.5f, 0.31f);
+          lightPos = glm::vec3(1.2f, 1.0f, 2.0f);
+        }
+        ImGui::SliderFloat3("Light Position", (float *)&lightPos, -5.0f, 5.0f);
+        ImGui::ColorPicker3("Light Color", (float *)&lightColor);
+        ImGui::ColorPicker3("Object Color", (float *)&objectColor);
       }
 
       ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
