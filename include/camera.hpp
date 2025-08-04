@@ -39,12 +39,17 @@ public:
     case Backward:
       position -= velocity * frontFace;
       break;
-
     case Left:
       position -= velocity * glm::normalize(glm::cross(frontFace, upVec));
       break;
     case Right:
       position += velocity * glm::normalize(glm::cross(frontFace, upVec));
+      break;
+    case Up:
+      position.y += velocity;
+      break;
+    case Down:
+      position.y -= velocity;
       break;
     }
   }

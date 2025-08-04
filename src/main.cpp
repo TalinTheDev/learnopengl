@@ -101,7 +101,7 @@ void handleMovement(GLFWwindow *window) {
   if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
     camera.move(Direction::Up, deltaTime);
   }
-  if (glfwGetKey(window, GLFW_KEY_BACKSPACE) == GLFW_PRESS) {
+  if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS) {
     camera.move(Direction::Down, deltaTime);
   }
 }
