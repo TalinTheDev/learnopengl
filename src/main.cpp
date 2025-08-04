@@ -19,8 +19,6 @@
 #include <iostream>
 
 // Global Variables
-const float WIDTH = 800.0f;
-const float HEIGHT = 600.0f;
 bool debugWindow = false;
 float debugWindowShowTime = 0.0f;
 
@@ -226,7 +224,9 @@ int main() {
     glDrawArrays(GL_TRIANGLES, 0, sizeof(vertices));
 
     if (debugWindow) {
-      ImGui::Begin("LearnOpenGL");
+      glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_CAPTURED);
+      ImGui::SetNextWindowSize(ImVec2(WIDTH / 2, HEIGHT / 2));
+      ImGui::Begin("LearnOpenGL Debug Window");
       if (ImGui::Button("Reset")) {
         camera.fov = 45.0f;
         camera.position = glm::vec3(0.0f, 0.0f, 3.0f);
@@ -236,17 +236,21 @@ int main() {
         camera.moveSpeed = 2.5f;
         camera.lookSens = 0.01f;
       }
-      ImGui::SliderFloat3("Camera Position", (float *)&camera.position, -5.0f,
-                          5.0f);
-      ImGui::SliderFloat("Camera Yaw", &camera.yaw, -360.0f, 360.0f);
-      ImGui::SliderFloat("Camera Pitch", &camera.pitch, -89.0f, 89.0f);
-      ImGui::SliderFloat("Camera FOV", &camera.fov, 1.0f, 120.0f);
-      ImGui::SliderFloat("Movement Speed", &camera.moveSpeed, 0.0f, 10.0f);
-      ImGui::SliderFloat("Look Speed", &camera.lookSens, 0.0f, 10.0f);
+      if (ImGui::CollapsingHeader("Camera")) {
+        ImGui::SliderFloat3("Camera Position", (float *)&camera.position, -5.0f,
+                            5.0f);
+        ImGui::SliderFloat("Camera Yaw", &camera.yaw, -360.0f, 360.0f);
+        ImGui::SliderFloat("Camera Pitch", &camera.pitch, -89.0f, 89.0f);
+        ImGui::SliderFloat("Camera FOV", &camera.fov, 1.0f, 120.0f);
+        ImGui::SliderFloat("Movement Speed", &camera.moveSpeed, 0.0f, 10.0f);
+        ImGui::SliderFloat("Look Speed", &camera.lookSens, 0.0f, 10.0f);
+      }
 
       ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
                   1000.0f / io.Framerate, io.Framerate);
       ImGui::End();
+    } else {
+      glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     }
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

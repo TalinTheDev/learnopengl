@@ -22,12 +22,18 @@ public:
   float moveSpeed = 2.5f;
   float lookSens = 0.1f;
 
-  float yaw = -90.0f;
-  float pitch = 0.0f;
+  float yaw = -77.0f;
+  float pitch = -25.0f;
 
-  glm::vec3 position = glm::vec3(0.0f, 0.0f, 3.0f);
-  glm::vec3 frontFace = glm::vec3(0.0f, 0.0f, -1.0f);
+  glm::vec3 position = glm::vec3(0.0f, 2.0f, 4.0f);
+  glm::vec3 frontFace = glm::vec3(0.0f, 0.0f, 0.0f);
   glm::vec3 upVec = glm::vec3(0.0f, 1.0f, 0.0f);
+
+  Camera() {
+    // Just fix the camera not updating until the first mouse movement
+    look(0, 0);
+    firstMouse = true;
+  }
 
   void move(Direction direction, float deltaTime) {
     float velocity = moveSpeed * deltaTime;

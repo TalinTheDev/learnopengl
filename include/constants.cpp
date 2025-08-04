@@ -1,6 +1,9 @@
 #ifndef CONSTNATS_H
 #define CONSTNATS_H
 
+const float WIDTH = 1200.0f;
+const float HEIGHT = 700.0f;
+
 float vertices[] = {
     -0.5f, -0.5f, -0.5f, 0.5f,  -0.5f, -0.5f, 0.5f,  0.5f,  -0.5f,
     0.5f,  0.5f,  -0.5f, -0.5f, 0.5f,  -0.5f, -0.5f, -0.5f, -0.5f,
@@ -19,7 +22,5 @@ float vertices[] = {
 
     -0.5f, 0.5f,  -0.5f, 0.5f,  0.5f,  -0.5f, 0.5f,  0.5f,  0.5f,
     0.5f,  0.5f,  0.5f,  -0.5f, 0.5f,  0.5f,  -0.5f, 0.5f,  -0.5f};
-
-unsigned int indices[] = {};
 
 #endif
