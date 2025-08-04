@@ -3,9 +3,9 @@
 #include <GLFW/glfw3.h>
 // clang-format on
 #include "camera.hpp"
+#include "constants.cpp"
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/ext/matrix_transform.hpp"
-#include "glm/geometric.hpp"
 #include "glm/trigonometric.hpp"
 #include "shader.hpp"
 #define STB_IMAGE_IMPLEMENTATION
@@ -28,47 +28,6 @@ float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 Camera camera;
-
-// Vertices for the cubes defined as the corners and their texture
-// coordinates
-const float vertices[] = {
-    -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 0.5f,  -0.5f, -0.5f, 1.0f, 0.0f,
-    0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f,
-    -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
-
-    -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, 0.5f,  -0.5f, 0.5f,  1.0f, 0.0f,
-    0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-    -0.5f, 0.5f,  0.5f,  0.0f, 1.0f, -0.5f, -0.5f, 0.5f,  0.0f, 0.0f,
-
-    -0.5f, 0.5f,  0.5f,  1.0f, 0.0f, -0.5f, 0.5f,  -0.5f, 1.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-    -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, -0.5f, 0.5f,  0.5f,  1.0f, 0.0f,
-
-    0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f,
-    0.5f,  -0.5f, -0.5f, 0.0f, 1.0f, 0.5f,  -0.5f, -0.5f, 0.0f, 1.0f,
-    0.5f,  -0.5f, 0.5f,  0.0f, 0.0f, 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-
-    -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.5f,  -0.5f, -0.5f, 1.0f, 1.0f,
-    0.5f,  -0.5f, 0.5f,  1.0f, 0.0f, 0.5f,  -0.5f, 0.5f,  1.0f, 0.0f,
-    -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-
-    -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f,
-    0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-    -0.5f, 0.5f,  0.5f,  0.0f, 0.0f, -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f,
-};
-
-const unsigned int indices[] = {
-    0, 1, 3, // first triangle
-    1, 2, 3, // second triangle
-};
-
-const glm::vec3 cubePositions[] = {
-    glm::vec3(0.0f, 0.0f, 0.0f),    glm::vec3(2.0f, 5.0f, -15.0f),
-    glm::vec3(-1.5f, -2.2f, -2.5f), glm::vec3(-3.8f, -2.0f, -12.3f),
-    glm::vec3(2.4f, -0.4f, -3.5f),  glm::vec3(-1.7f, 3.0f, -7.5f),
-    glm::vec3(1.3f, -2.0f, -2.5f),  glm::vec3(1.5f, 2.0f, -2.5f),
-    glm::vec3(1.5f, 0.2f, -1.5f),   glm::vec3(-1.3f, 1.0f, -1.5f),
-};
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
   glViewport(0, 0, width, height);
@@ -145,68 +104,6 @@ GLFWwindow *initalizeWindowContext() {
   return window;
 };
 
-unsigned int setupVAO() {
-  unsigned int VAO;
-  glGenVertexArrays(1, &VAO);
-  glBindVertexArray(VAO);
-  return VAO;
-}
-
-unsigned int setupVBO() {
-  unsigned int VBO;
-  glGenBuffers(1, &VBO);
-  glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
-                        (void *)(3 * sizeof(float)));
-  glEnableVertexAttribArray(0);
-  glEnableVertexAttribArray(1);
-  return VBO;
-}
-
-unsigned int setupEBO() {
-  unsigned int EBO;
-  glGenBuffers(1, &EBO);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
-               GL_STATIC_DRAW);
-
-  return EBO;
-}
-
-void draw(Shader shader, unsigned int VAO, unsigned int texture1,
-          unsigned int texture2) {
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, texture1);
-  glActiveTexture(GL_TEXTURE1);
-  glBindTexture(GL_TEXTURE_2D, texture2);
-
-  glm::mat4 view;
-  view = glm::lookAt(camera.position, camera.position + camera.frontFace,
-                     camera.upVec);
-  glm::mat4 projection;
-  projection =
-      glm::perspective(glm::radians(camera.fov), WIDTH / HEIGHT, 0.1f, 100.0f);
-
-  glBindVertexArray(VAO);
-  for (unsigned int i = 0; i < 10; i++) {
-    glm::mat4 model = glm::mat4(1.0f);
-
-    model = glm::translate(model, cubePositions[i]);
-    float angle = 20.0f * i;
-    model =
-        glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-
-    shader.use();
-    shader.setMat4("view", view);
-    shader.setMat4("projection", projection);
-    shader.setMat4("model", model);
-    glDrawArrays(GL_TRIANGLES, 0, 36);
-  }
-}
-
 unsigned int setupTexture(const char *path, GLenum type) {
   stbi_set_flip_vertically_on_load(true);
   unsigned int texture;
@@ -240,6 +137,30 @@ int main() {
     return -1;
   }
 
+  Shader cubeShader("../src/shader.vert", "../src/shader.frag");
+  Shader lightShader("../src/shader.vert", "../src/light.frag");
+
+  unsigned int cubeVAO;
+  unsigned int lightVAO;
+  unsigned int VBO;
+
+  glGenVertexArrays(1, &cubeVAO);
+  glGenBuffers(1, &VBO);
+
+  glBindBuffer(GL_ARRAY_BUFFER, VBO);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+  glBindVertexArray(cubeVAO);
+
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+  glEnableVertexAttribArray(0);
+
+  glGenVertexArrays(1, &lightVAO);
+  glBindVertexArray(lightVAO);
+  glBindBuffer(GL_ARRAY_BUFFER, VBO);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+  glEnableVertexAttribArray(0);
+
   // Setup Dear ImGui context
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
@@ -253,20 +174,8 @@ int main() {
                      // callbacks and chain to existing ones.
   ImGui_ImplOpenGL3_Init();
 
-  Shader ourShader("../src/shader.vert", "../src/shader.frag");
-  unsigned int VAO = setupVAO();
-  unsigned int VBO = setupVBO();
-  // unsigned int EBO = setupEBO();
-  unsigned int texture1 = setupTexture("../assets/container.jpg", GL_RGB);
-  unsigned int texture2 = setupTexture("../assets/awesomeface.png", GL_RGBA);
-
   // For a wireframe drawing, set the mode to GL_LINE rather than GL_FILL
   // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-  // Tell OpenGL which texture unit each shader sample belongs to
-  ourShader.use();
-  ourShader.setInt("texture1", 0);
-  ourShader.setInt("texture2", 1);
 
   glEnable(GL_DEPTH_TEST);
   while (!glfwWindowShouldClose(window)) {
@@ -281,9 +190,40 @@ int main() {
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    draw(ourShader, VAO, texture1, texture2);
+
+    glm::mat4 view;
+    view = glm::lookAt(camera.position, camera.position + camera.frontFace,
+                       camera.upVec);
+    glm::mat4 projection;
+    projection = glm::perspective(glm::radians(camera.fov), WIDTH / HEIGHT,
+                                  0.1f, 100.0f);
+
+    glBindVertexArray(cubeVAO);
+    glm::mat4 model = glm::mat4(1.0f);
+    cubeShader.use();
+    cubeShader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
+    cubeShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+    cubeShader.setMat4("view", view);
+    cubeShader.setMat4("projection", projection);
+    cubeShader.setMat4("model", model);
+
+    glDrawArrays(GL_TRIANGLES, 0, sizeof(vertices));
+
+    glBindVertexArray(lightVAO);
+    lightShader.use();
+    glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
+    model = glm::mat4(1.0f);
+    model = glm::translate(model, lightPos);
+    model = glm::scale(model, glm::vec3(0.2f));
+
+    lightShader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
+    lightShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+    lightShader.setMat4("view", view);
+    lightShader.setMat4("projection", projection);
+    lightShader.setMat4("model", model);
+    glDrawArrays(GL_TRIANGLES, 0, sizeof(vertices));
 
     if (debugWindow) {
       ImGui::Begin("LearnOpenGL");
@@ -314,7 +254,7 @@ int main() {
     glfwSwapBuffers(window);
   }
 
-  glDeleteVertexArrays(1, &VAO);
+  glDeleteVertexArrays(1, &cubeVAO);
   glDeleteBuffers(1, &VBO);
   ImGui_ImplOpenGL3_Shutdown();
   ImGui_ImplGlfw_Shutdown();
