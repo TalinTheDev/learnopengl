@@ -24,6 +24,8 @@ public:
 
   float yaw = -77.0f;
   float pitch = -25.0f;
+  float lastX = 400;
+  float lastY = 300;
 
   glm::vec3 position = glm::vec3(0.0f, 2.0f, 4.0f);
   glm::vec3 frontFace = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -97,8 +99,6 @@ public:
   }
 
 private:
-  float lastX = 400;
-  float lastY = 300;
   bool firstMouse = true;
 };
 

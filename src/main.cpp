@@ -61,6 +61,18 @@ void handleMovement(GLFWwindow *window) {
   if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS) {
     camera.move(Direction::Down, deltaTime);
   }
+  if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+    camera.look(camera.lastX, camera.lastY + 10);
+  }
+  if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+    camera.look(camera.lastX, camera.lastY - 10);
+  }
+  if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+    camera.look(camera.lastX - 10, camera.lastY);
+  }
+  if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+    camera.look(camera.lastX + 10, camera.lastY);
+  }
 }
 
 void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
