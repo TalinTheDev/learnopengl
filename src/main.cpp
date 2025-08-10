@@ -2,12 +2,12 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 // clang-format on
-#include "camera.hpp"
 #include "constants.cpp"
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/ext/matrix_transform.hpp"
 #include "glm/trigonometric.hpp"
-#include "shader.hpp"
+#include "utils/camera.hpp"
+#include "utils/shader.hpp"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #include <glm/glm.hpp>
@@ -62,10 +62,10 @@ void handleMovement(GLFWwindow *window) {
     camera.move(Direction::Down, deltaTime);
   }
   if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-    camera.look(camera.lastX, camera.lastY + 10);
+    camera.look(camera.lastX, camera.lastY - 10);
   }
   if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-    camera.look(camera.lastX, camera.lastY - 10);
+    camera.look(camera.lastX, camera.lastY + 10);
   }
   if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
     camera.look(camera.lastX - 10, camera.lastY);
@@ -147,8 +147,8 @@ int main() {
     return -1;
   }
 
-  Shader cubeShader("../src/cube.vert", "../src/cube.frag");
-  Shader lightShader("../src/light.vert", "../src/light.frag");
+  Shader cubeShader("../src/shaders/cube.vert", "../src/shaders/cube.frag");
+  Shader lightShader("../src/shaders/light.vert", "../src/shaders/light.frag");
 
   unsigned int cubeVAO;
   unsigned int lightVAO;
@@ -194,6 +194,9 @@ int main() {
   glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
   glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
   glm::vec3 objectColor(1.0f, 0.5f, 0.31f);
+  float ambientStrength = 0.1;
+  float specularStrength = 0.5;
+  unsigned int shininess = 32;
   while (!glfwWindowShouldClose(window)) {
     float currentFrame = glfwGetTime();
     deltaTime = currentFrame - lastFrame;
@@ -219,15 +222,16 @@ int main() {
     glBindVertexArray(cubeVAO);
     glm::mat4 model = glm::mat4(1.0f);
     cubeShader.use();
-    cubeShader.setVec3("objectColor", objectColor.x, objectColor.y,
-                       objectColor.z);
-    cubeShader.setVec3("lightColor", lightColor.x, lightColor.y, lightColor.z);
-    cubeShader.setVec3("lightPos", lightPos.x, lightPos.y, lightPos.z);
-    cubeShader.setVec3("viewPos", camera.position.x, camera.position.y,
-                       camera.position.z);
+    cubeShader.setVec3("objectColor", objectColor);
+    cubeShader.setVec3("lightColor", lightColor);
+    cubeShader.setVec3("lightPos", lightPos);
+    cubeShader.setVec3("viewPos", camera.position);
     cubeShader.setMat4("view", view);
     cubeShader.setMat4("projection", projection);
     cubeShader.setMat4("model", model);
+    cubeShader.setFloat("ambientStrength", ambientStrength);
+    cubeShader.setFloat("specularStrength", specularStrength);
+    cubeShader.setInt("shininess", shininess);
 
     glDrawArrays(GL_TRIANGLES, 0, sizeof(vertices));
 
@@ -237,16 +241,14 @@ int main() {
     model = glm::translate(model, lightPos);
     model = glm::scale(model, glm::vec3(0.2f));
 
-    lightShader.setVec3("objectColor", objectColor.x, objectColor.y,
-                        objectColor.z);
-    lightShader.setVec3("lightColor", lightColor.x, lightColor.y, lightColor.z);
+    lightShader.setVec3("objectColor", objectColor);
+    lightShader.setVec3("lightColor", lightColor);
     lightShader.setMat4("view", view);
     lightShader.setMat4("projection", projection);
     lightShader.setMat4("model", model);
     glDrawArrays(GL_TRIANGLES, 0, sizeof(vertices));
 
     if (debugWindow) {
-      glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
       ImGui::SetNextWindowSize(ImVec2(WIDTH / 2, HEIGHT / 2));
       ImGui::Begin("LearnOpenGL Debug Window");
       if (ImGui::CollapsingHeader("Camera")) {
@@ -271,18 +273,20 @@ int main() {
         if (ImGui::Button("Reset")) {
           lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
           objectColor = glm::vec3(1.0f, 0.5f, 0.31f);
-          lightPos = glm::vec3(1.2f, 1.0f, 2.0f);
+          ambientStrength = 0.1;
+          specularStrength = 0.5;
+          shininess = 32;
         }
-        ImGui::SliderFloat3("Light Position", (float *)&lightPos, -5.0f, 5.0f);
-        ImGui::ColorPicker3("Light Color", (float *)&lightColor);
-        ImGui::ColorPicker3("Object Color", (float *)&objectColor);
+        ImGui::ColorEdit3("Light Color", (float *)&lightColor);
+        ImGui::ColorEdit3("Object Color", (float *)&objectColor);
+        ImGui::SliderFloat("Ambient Strength", &ambientStrength, 0, 1);
+        ImGui::SliderFloat("Specular Strength", &specularStrength, 0, 1);
+        ImGui::SliderInt("Shininess", (int *)&shininess, 0, 512);
       }
 
       ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
                   1000.0f / io.Framerate, io.Framerate);
       ImGui::End();
-    } else {
-      glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     }
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

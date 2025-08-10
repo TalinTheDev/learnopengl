@@ -1,11 +1,7 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
-#include "glm/ext/quaternion_geometric.hpp"
-#include "glm/geometric.hpp"
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <iostream>
+#include "../glm/glm.hpp"
 
 enum Direction {
   Forward,
