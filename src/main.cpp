@@ -249,17 +249,19 @@ int main() {
     glDrawArrays(GL_TRIANGLES, 0, sizeof(vertices));
 
     if (debugWindow) {
-      ImGui::SetNextWindowSize(ImVec2(WIDTH / 2, HEIGHT / 2));
+      ImGui::SetNextWindowSize(ImVec2(WIDTH / 3, HEIGHT));
+      ImGui::SetNextWindowPos(ImVec2(0, 0));
       ImGui::Begin("LearnOpenGL Debug Window");
       if (ImGui::CollapsingHeader("Camera")) {
         if (ImGui::Button("Reset")) {
           camera.fov = 45.0f;
-          camera.position = glm::vec3(0.0f, 0.0f, 3.0f);
-          camera.frontFace = glm::vec3(0.0f, 0.0f, -1.0f);
-          camera.yaw = 0.0f;
-          camera.pitch = 0.0f;
+          camera.position = glm::vec3(0.0f, 2.0f, 4.0f);
+          camera.frontFace = glm::vec3(0.0f, 0.0f, 0.0f);
+          camera.yaw = -77.0f;
+          camera.pitch = -25.0f;
           camera.moveSpeed = 2.5f;
-          camera.lookSens = 0.01f;
+          camera.lookSens = 0.1f;
+          camera.look(camera.lastX, camera.lastY);
         }
         ImGui::SliderFloat3("Camera Position", (float *)&camera.position, -5.0f,
                             5.0f);
@@ -270,7 +272,7 @@ int main() {
         ImGui::SliderFloat("Look Speed", &camera.lookSens, 0.0f, 10.0f);
       }
       if (ImGui::CollapsingHeader("Lighting")) {
-        if (ImGui::Button("Reset")) {
+        if (ImGui::Button("Reset Lighting")) {
           lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
           objectColor = glm::vec3(1.0f, 0.5f, 0.31f);
           ambientStrength = 0.1;
