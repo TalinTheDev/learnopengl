@@ -1,4 +1,5 @@
 // clang-format off
+#include <cmath>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 // clang-format on
@@ -192,11 +193,14 @@ int main() {
 
   glEnable(GL_DEPTH_TEST);
   glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
-  glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
-  glm::vec3 objectColor(1.0f, 0.5f, 0.31f);
-  float ambientStrength = 0.1;
-  float specularStrength = 0.5;
-  unsigned int shininess = 32;
+  glm::vec3 lightColor(1.0f);
+  float lightDiffuseIntensity = 0.5f;
+  float lightAmbientIntensity = 0.2f;
+  float lightSpecularIntensity = 1.0f;
+  glm::vec3 cubeAmbientColor(1.0f, 0.5f, 0.31f);
+  glm::vec3 cubeDiffuseColor(1.0f, 0.5f, 0.31f);
+  glm::vec3 cubeSpecularColor(0.5f);
+  float cubeShininess = 32.0f;
   while (!glfwWindowShouldClose(window)) {
     float currentFrame = glfwGetTime();
     deltaTime = currentFrame - lastFrame;
@@ -219,19 +223,23 @@ int main() {
     projection = glm::perspective(glm::radians(camera.fov), WIDTH / HEIGHT,
                                   0.1f, 100.0f);
 
+    glm::vec3 lightDiffuseColor = lightColor * lightDiffuseIntensity;
+    glm::vec3 lightAmbientColor = lightDiffuseColor * lightAmbientIntensity;
     glBindVertexArray(cubeVAO);
     glm::mat4 model = glm::mat4(1.0f);
     cubeShader.use();
-    cubeShader.setVec3("objectColor", objectColor);
-    cubeShader.setVec3("lightColor", lightColor);
-    cubeShader.setVec3("lightPos", lightPos);
     cubeShader.setVec3("viewPos", camera.position);
     cubeShader.setMat4("view", view);
     cubeShader.setMat4("projection", projection);
     cubeShader.setMat4("model", model);
-    cubeShader.setFloat("ambientStrength", ambientStrength);
-    cubeShader.setFloat("specularStrength", specularStrength);
-    cubeShader.setInt("shininess", shininess);
+    cubeShader.setVec3("material.ambient", cubeAmbientColor);
+    cubeShader.setVec3("material.diffuse", cubeDiffuseColor);
+    cubeShader.setVec3("material.specular", cubeSpecularColor);
+    cubeShader.setFloat("material.shininess", cubeShininess);
+    cubeShader.setVec3("light.position", lightPos);
+    cubeShader.setVec3("light.ambient", lightAmbientColor);
+    cubeShader.setVec3("light.diffuse", lightDiffuseColor);
+    cubeShader.setVec3("light.specular", glm::vec3(lightSpecularIntensity));
 
     glDrawArrays(GL_TRIANGLES, 0, sizeof(vertices));
 
@@ -241,11 +249,10 @@ int main() {
     model = glm::translate(model, lightPos);
     model = glm::scale(model, glm::vec3(0.2f));
 
-    lightShader.setVec3("objectColor", objectColor);
-    lightShader.setVec3("lightColor", lightColor);
     lightShader.setMat4("view", view);
     lightShader.setMat4("projection", projection);
     lightShader.setMat4("model", model);
+    lightShader.setVec3("light.color", lightColor);
     glDrawArrays(GL_TRIANGLES, 0, sizeof(vertices));
 
     if (debugWindow) {
@@ -273,17 +280,30 @@ int main() {
       }
       if (ImGui::CollapsingHeader("Lighting")) {
         if (ImGui::Button("Reset Lighting")) {
-          lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
-          objectColor = glm::vec3(1.0f, 0.5f, 0.31f);
-          ambientStrength = 0.1;
-          specularStrength = 0.5;
-          shininess = 32;
+          lightColor = glm::vec3(1.0f);
+          lightDiffuseIntensity = 0.5f;
+          lightAmbientIntensity = 0.2f;
+          lightSpecularIntensity = 1.0f;
+          cubeAmbientColor = glm::vec3(1.0f, 0.5f, 0.31f);
+          cubeDiffuseColor = glm::vec3(1.0f, 0.5f, 0.31f);
+          cubeSpecularColor = glm::vec3(0.5f);
+          cubeShininess = 32.0f;
         }
         ImGui::ColorEdit3("Light Color", (float *)&lightColor);
-        ImGui::ColorEdit3("Object Color", (float *)&objectColor);
-        ImGui::SliderFloat("Ambient Strength", &ambientStrength, 0, 1);
-        ImGui::SliderFloat("Specular Strength", &specularStrength, 0, 1);
-        ImGui::SliderInt("Shininess", (int *)&shininess, 0, 512);
+        ImGui::SliderFloat("Light Ambient Intensity", &lightAmbientIntensity, 0,
+                           1);
+        ImGui::SliderFloat("Light Diffuse Intensity", &lightDiffuseIntensity, 0,
+                           1);
+        ImGui::SliderFloat("Light Specular Intensity", &lightSpecularIntensity,
+                           0, 1);
+
+        ImGui::SliderFloat3("Cube Ambient Color", (float *)&cubeAmbientColor, 0,
+                            1);
+        ImGui::SliderFloat3("Cube Diffuse Color", (float *)&cubeDiffuseColor, 0,
+                            1);
+        ImGui::SliderFloat3("Cube Specular Color", (float *)&cubeSpecularColor,
+                            0, 1);
+        ImGui::SliderFloat("Cube Shininess", &cubeShininess, 0, 512);
       }
 
       ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
