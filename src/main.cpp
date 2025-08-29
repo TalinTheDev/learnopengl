@@ -206,6 +206,7 @@ int main() {
 
   glEnable(GL_DEPTH_TEST);
   glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
+  glm::vec3 lightDir(-0.2f, -1.0f, -0.3f);
   glm::vec3 lightColor(1.0f);
   float lightDiffuseIntensity = 0.5f;
   float lightAmbientIntensity = 0.2f;
@@ -243,26 +244,39 @@ int main() {
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, specularMap);
     glBindVertexArray(cubeVAO);
-    glm::mat4 model = glm::mat4(1.0f);
     cubeShader.use();
     cubeShader.setVec3("viewPos", camera.position);
     cubeShader.setMat4("view", view);
     cubeShader.setMat4("projection", projection);
-    cubeShader.setMat4("model", model);
     cubeShader.setVec3("material.ambient", cubeAmbientColor);
     cubeShader.setInt("material.diffuse", 0);
     cubeShader.setInt("material.specular", 1);
     cubeShader.setFloat("material.shininess", cubeShininess);
-    cubeShader.setVec3("light.position", lightPos);
+    cubeShader.setVec3("light.position", camera.position);
+    cubeShader.setVec3("light.direction", camera.frontFace);
     cubeShader.setVec3("light.ambient", lightAmbientColor);
     cubeShader.setVec3("light.diffuse", lightDiffuseColor);
     cubeShader.setVec3("light.specular", glm::vec3(lightSpecularIntensity));
+    cubeShader.setFloat("light.constant", 1.0f);
+    cubeShader.setFloat("light.linear", 0.09f);
+    cubeShader.setFloat("light.quadratic", 0.032f);
+    cubeShader.setFloat("light.cutOff", glm::cos(glm::radians(12.5f)));
+    cubeShader.setFloat("light.outerCutOff", glm::cos(glm::radians(17.5f)));
 
-    glDrawArrays(GL_TRIANGLES, 0, sizeof(vertices));
+    for (unsigned int i = 0; i < 10; i++) {
+      glm::mat4 model = glm::mat4(1.0f);
+      model = glm::translate(model, cubePositions[i]);
+      float angle = 20.0f * i;
+      model =
+          glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+      cubeShader.setMat4("model", model);
+
+      glDrawArrays(GL_TRIANGLES, 0, 36);
+    }
 
     glBindVertexArray(lightVAO);
     lightShader.use();
-    model = glm::mat4(1.0f);
+    glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, lightPos);
     model = glm::scale(model, glm::vec3(0.2f));
 
@@ -321,6 +335,8 @@ int main() {
         ImGui::SliderFloat3("Cube Specular Color", (float *)&cubeSpecularColor,
                             0, 1);
         ImGui::SliderFloat("Cube Shininess", &cubeShininess, 0, 512);
+        ImGui::SliderFloat3("Light Position", (float *)&lightPos, 0, 1);
+        ImGui::SliderFloat3("Light Direction", (float *)&lightDir, 0, 1);
       }
 
       ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
